@@ -68,11 +68,11 @@ uint8_t g_buf_flag=which_buf1;
 
 /**环形buffer 重要三个函数
  * put：将数据写入buffer
- * get：从buffer中读取数据
+ * get：从buffer中读取数�?
  * isEmpty：判断buffer是否为空
  * 
- * put：将数据写入buffer--从head开始写入
- * get：从buffer中读取数据--从tail开始读取
+ * put：将数据写入buffer--从head�?始写�?
+ * get：从buffer中读取数�?--从tail�?始读�?
  */
 void buffer_put(uint8_t val){
   // log_a("val %d,head %d",val,head);
@@ -93,7 +93,7 @@ uint8_t is_empty(void){
 uint8_t buffer_get(uint8_t *val){
   if(!is_empty()){
     // log_a("buffer_get %d",g_buffer[tail]);
-    *val=g_buffer[tail++];//从tail开始读取数据  尾部取出
+    *val=g_buffer[tail++];//从tail�?始读取数�?  尾部取出
     if(tail==buffer_size){
       tail=0;
     }
@@ -107,7 +107,7 @@ void my_main(void){
     buffer_put(g_input_buffer[i]);
     log_d("i: %d ;head: %d ;val: %d",i,head,g_input_buffer[i]);//this head has been ++(incremented)
 
-    if(i%2==0 && !is_empty()){  //偶数次读取数据
+    if(i%2==0 && !is_empty()){  //偶数次读取数�?
       buffer_get(&val);
       log_i("tail: %d val: %d",tail,val);
     }
@@ -176,9 +176,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
 
   /**应当有三个线程，
-   * �?个默认线程，初始�?
-   * �?个切换buffer线程�?
-   * �?个处理数�?--convert voltage 线程 
+   * �??个默认线程，初始�??
+   * �??个切换buffer线程�??
+   * �??个处理数�??--convert voltage 线程 
    * */
   ChangeBufTaskHandle = osThreadNew(ChangeBufTask, NULL, &ChangeBufTask_attributes);
   // ConvertVoltageTaskHandle = osThreadNew(ConvertVoltageTask, NULL, &ConvertVoltageTask_attributes);
