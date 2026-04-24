@@ -167,14 +167,14 @@ osThreadId_t rec_A_TaskHandle;
 const osThreadAttr_t rec_A_Task_attributes = {
   .name = "rec_A_Task",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
  /**取出buffer+打印 */
 osThreadId_t uart_driver_TaskHandle;
 const osThreadAttr_t uart_driver_Task_attributes = {
   .name = "uart_driver_Task",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityNormal,//靠近内核，优先级高，先执行
 };
 /* USER CODE END FunctionPrototypes */
 

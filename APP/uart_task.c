@@ -58,14 +58,12 @@
 #define all_size 2
 #define half_notify 0
 #define full_notify 1
-
+extern uint8_t g_buf1[1];
+extern uint8_t g_buf2[1];
 
 xQueueHandle xQueue_A=NULL;
 uint32_t send_que_recv_A=0;
-
-extern uint8_t g_buf1[1];
-extern uint8_t g_buf2[1];
-extern circle_buffer_t * g_cirle_buffer;
+extern circle_buffer_t * g_cirle_buffer;//他那里用的是函数返回circlebuffer
 
 void uart_rec_A_func(void *arg){
   /**接收A线程 */
@@ -73,22 +71,38 @@ void uart_rec_A_func(void *arg){
 
   uint32_t recv_notify=0;
   uint8_t cirle_data=0;
- uint8_t buff[]="hello world\r\n"; 
+  uint8_t buff[]="hello world\r\n"; 
 	HAL_UART_Transmit(&huart1,buff,14,100);//HAL_UART_Transmit_DMA_IT  
 
   //创建消息队列
-  xQueue_A=xQueueCreate(all_size, sizeof(uint8_t));
+  xQueue_A=xQueueCreate(all_size, sizeof(uint32_t));
   log_i("queue_irq_rec_A Init Success");
   log_i("queue address: %p",xQueue_A);
-// HAL_UART_Transmit_IT(&huart1,"abc",3);
+
 /** HAL_UART_Receive_DMA_IT(&huart1, p_g_buf, full_size);//启动dma 接收,100
     重新启动DMA接收  --要在if里面不然任何一个uart触发中断之后都要重新启动 */
     // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, p_g_buf, full_size);
 
   while(1){
-	// if(HAL_OK==HAL_UART_Receive_IT(&huart1, g_buf1, 1)){  /////uart 只支持8bit  full_size
-	// 	HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
-	// }
+    /*1、接收到前端发来的信号*/
+    if(xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY) == pdTRUE){
+      log_w("recv_notify: %x",recv_notify);//打印的 发送来的信号
+      
+      /**2、判断是否为帧头或帧尾*/
+
+      /*3、对数据进行输出 */
+      if(circle_buf_get(g_cirle_buffer,&cirle_data)){
+    HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
+    log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);
+  }
+}
+
+    osDelay(1);  
+      // HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
+      // log_d("i will notify OutputTask& changebuffer");
+}
+/*circle buffer get测试*/
+#if 0
   if(circle_buf_get(g_cirle_buffer,&cirle_data)){
     HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
     log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);
@@ -99,25 +113,23 @@ void uart_rec_A_func(void *arg){
       log_d("i will notify OutputTask& changebuffer");
       log_w("recv_notify: %d",recv_notify);
     }
-      osDelay(1);
+#endif
 
-      
-}
+/*阻塞发送测试*/
+#if 0 
+	// if(HAL_OK==HAL_UART_Receive_IT(&huart1, g_buf1, 1)){  /////uart 只支持8bit  full_size
+	// 	HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
+	// }
     /***uint8_t i=sizeof(p_g_buf);HAL_UART_Transmit_IT(&huart1, &i, 1);//这个地方只会是0x04---发的是ascii码
 	  printf("heeeeeello\r\n");
 //	HAL_UART_Transmit(&huart1, &i, 1, 100); // 先用阻塞发送测试
 
 // HAL_UART_Transmit_IT(&huart1, p_g_buf, sizeof(p_g_buf));
       //sizeof(p_g_buf)，这只会返回指针的大小（4字节） */
-  /* USER CODE END StartDefaultTask */
+#endif
 }
-void OutputTask(void *arg){
-  /**取出buffer+打印 */
-  log_i("OutputTask running---------------");
-  while(1){
-    osDelay(1);
-	  // log_d("---------");
-  }
-}
+
+
+
 /* USER CODE END Application */
 
