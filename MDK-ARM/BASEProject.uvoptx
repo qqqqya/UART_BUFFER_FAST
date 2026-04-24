@@ -155,9 +155,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>257</LineNumber>
+          <LineNumber>106</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134219956</Address>
+          <Address>134229164</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -166,41 +166,26 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>../Core/Src/freertos.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\BASEProject\../Core/Src/freertos.c\257</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>265</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134219972</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>../Core/Src/freertos.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\BASEProject\../Core/Src/freertos.c\265</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>185</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134226640</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>../Core/Src/stm32f4xx_it.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\BASEProject\../Core/Src/stm32f4xx_it.c\185</Expression>
+          <Expression>\\BASEProject\../Core/Src/freertos.c\106</Expression>
         </Bp>
       </Breakpoint>
+      <WatchWindow2>
+        <Ww>
+          <count>0</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>bufferflag</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>head</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>tail</ItemText>
+        </Ww>
+      </WatchWindow2>
       <Tracepoint>
         <THDelay>0</THDelay>
       </Tracepoint>
@@ -853,6 +838,26 @@
       <bDave2>0</bDave2>
       <PathWithFileName>..\BSP\bsp_uart_driver.c</PathWithFileName>
       <FilenameWithoutPath>bsp_uart_driver.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+  </Group>
+
+  <Group>
+    <GroupName>Middlewares/CIRLE_BUF</GroupName>
+    <tvExp>1</tvExp>
+    <tvExpOptDlg>0</tvExpOptDlg>
+    <cbSel>0</cbSel>
+    <RteFlg>0</RteFlg>
+    <File>
+      <GroupNumber>10</GroupNumber>
+      <FileNumber>45</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Middlewares\circle_buffer\mid_circle_buffer.c</PathWithFileName>
+      <FilenameWithoutPath>mid_circle_buffer.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

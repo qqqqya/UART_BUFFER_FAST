@@ -27,14 +27,20 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart_task.h"
+#include "bsp_uart_driver.h"
+#include "mid_circle_buffer.h"
 
+
+#if 0
 #include "usart.h"  //UART_HandleTypeDef huart1;
 #include "elog.h"
-
 #include <string.h>  // memset
 // #include <stdlib.h>
 #include "task.h"   // 任务通知函数  xTaskNotifyFromISR  MAX_DELAY
 #include "queue.h" 	//队列
+#endif
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -81,10 +87,11 @@
  */
 void buffer_put(uint8_t val){
   // log_a("val %d,head %d",val,head);
-    g_buffer[head++]=val;//this head g_buffer[head]=val then ++(incremented)
-    if(head==buffer_size){
-        head=0;
-    }
+    g_buffer[head]=val;//this head g_buffer[head]=val then ++(incremented)
+//    if(head==buffer_size){
+//        head=0;
+//    }
+	head=(head+1)%buffer_size;
     // g_buffer[(head++)%buffer_size]=val;
 
 }
@@ -98,10 +105,12 @@ uint8_t is_empty(void){
 uint8_t buffer_get(uint8_t *val){
   if(!is_empty()){
     // log_a("buffer_get %d",g_buffer[tail]);
-    *val=g_buffer[tail++];//从tail�?始读取数�?  尾部取出
-    if(tail==buffer_size){
-      tail=0;
-    }
+//    *val=g_buffer[tail++];//从tail�?始读取数�?  尾部取出
+//    if(tail==buffer_size){
+//      tail=0;
+//    }
+	*val=g_buffer[tail];//从tail�?始读取数�?  尾部取出
+    tail=(tail+1)%buffer_size;
 	return 1;
   }
   return 0;
@@ -117,13 +126,31 @@ void my_main(void){
       log_i("tail: %d val: %d",tail,val);
     }
   }
+  //打印剩余的
   while(!is_empty()){
     buffer_get(&val);
     log_i("tail: %d val: %d",tail,val);
   }
 }
 #endif
+void  my_main(void){
+  uint8_t g_input_buffer[8]={1,2,3,4,5,6,7,8};//输入数据
+  circle_buffer_t * buffer = mid_circle_buffer_create();
+  uint8_t val=0;
+  if(buffer == NULL){
+    log_a("mid_circle_buffer_create failed");
+    return;
+  }
+  for(int i=0;i<CIRCLE_BUFFER_SIZE;i++){
+    circle_buf_put(buffer,g_input_buffer[i]);//这里直接传入结构体就好-内部自动指向arry
+    log_d("i: %d ;head: %d ;val: %d",i,buffer->head,buffer->data[i]);
+    if(i%2==0 && !circle_buf_is_empty(buffer)){ //偶数次读取数
+      circle_buf_get(buffer,&val);
+      log_i("tail: %d val: %d",buffer->tail,val);
+    }
+  }
 
+}
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -136,16 +163,16 @@ const osThreadAttr_t defaultTask_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
  /**变换buffer+通知另一个线程 */
-osThreadId_t ChangeBufTaskHandle;
-const osThreadAttr_t ChangeBufTask_attributes = {
-  .name = "ChangeBufTask",
+osThreadId_t rec_A_TaskHandle;
+const osThreadAttr_t rec_A_Task_attributes = {
+  .name = "rec_A_Task",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
  /**取出buffer+打印 */
-osThreadId_t OutputTaskHandle;
-const osThreadAttr_t OutputTask_attributes = {
-  .name = "OutputTask",
+osThreadId_t uart_driver_TaskHandle;
+const osThreadAttr_t uart_driver_Task_attributes = {
+  .name = "uart_driver_Task",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -184,14 +211,15 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
-
   /**应当有三个线程，
    * 
    * */
- ChangeBufTaskHandle = osThreadNew(ChangeBufTask, NULL, &ChangeBufTask_attributes);
-  OutputTaskHandle = osThreadNew(OutputTask, NULL, &OutputTask_attributes);
+  ///接收A线程--
+  rec_A_TaskHandle = osThreadNew(uart_rec_A_func, NULL, &rec_A_Task_attributes);
+
+ ///bsp_uart_driver---开中断-中断回调--切换ab-buffer
+  uart_driver_TaskHandle = osThreadNew(uart_driver_func, NULL, &uart_driver_Task_attributes);
   // ConvertVoltageTaskHandle = osThreadNew(ConvertVoltageTask, NULL, &ConvertVoltageTask_attributes);
 
   /* add threads, ... */
@@ -213,7 +241,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
- // my_main();
+//  my_main();
   /* Infinite loop */
 	for(;;)
   {
