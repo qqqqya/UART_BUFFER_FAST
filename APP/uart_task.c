@@ -113,13 +113,4 @@ void uart_rec_A_func(void *arg){
       //sizeof(p_g_buf)，这只会返回指针的大小（4字节） */
   /* USER CODE END StartDefaultTask */
 }
-void OutputTask(void *arg){
-  /**取出buffer+打印 */
-  log_i("OutputTask running---------------");
-  while(1){
-    osDelay(1);
-	  // log_d("---------");
-  }
-}
-/* USER CODE END Application */
 
