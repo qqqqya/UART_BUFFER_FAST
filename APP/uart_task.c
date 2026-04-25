@@ -75,7 +75,7 @@ void uart_rec_A_func(void *arg){
   uint8_t cirle_data=0;
  uint8_t buff[]="hello world\r\n"; 
 	HAL_UART_Transmit(&huart1,buff,14,100);//HAL_UART_Transmit_DMA_IT  
-    
+      
   //创建消息队列
   xQueue_A=xQueueCreate(all_size, sizeof(uint8_t));
   log_i("queue_irq_rec_A Init Success");
