@@ -93,7 +93,7 @@ void uart_rec_A_func(void *arg){
         uint16_t frame_state=FRAME_NOT_DETECTED;
         uint8_t data_temp[CIRCLE_BUFFER_SIZE]={0x00};//缓存循环buffer数据的临时数组
         uint8_t i=0;
-              uint32_t jinghe_count=0,crc_sum=0;   
+        uint32_t jinghe_count=0;   
               while(!circle_buf_is_empty(g_cirle_buffer)){
           circle_buf_get(g_cirle_buffer, &cirle_data);
           //一次性读空循环缓冲区中的数据
@@ -127,17 +127,28 @@ void uart_rec_A_func(void *arg){
                 //     crc_sum+=cirle_data;
                 //   }
                 // }
-                if(FRAME_TAIL==cirle_data){
+                if(FRAME_TAIL==cirle_data){//检测到帧尾 开始计算校验和
+                  /**计算校验和 --这个时候count已经定了 转存数据也成功了*/
+                  uint32_t crc_sum=0;
+                  uint32_t crc_temp=data_temp[jinghe_count-1];//-2 是crc
+                  for(i=0;i<jinghe_count-1;i++){
+                    crc_sum+=data_temp[i];
+                  }
+                  log_i("calculated data_sum = [%d]",crc_sum);
 
                   //打印净荷数据
-                  log_i("jinghe_circle_buffer logging");
-                  for(i=0;i<jinghe_count-1;i++){
-                    log_w("jinghe_circle_buffer = [%x]", data_temp[i]);
-                  }
+                  if(crc_sum==crc_temp){
+                    log_i("CRC ok!!jinghe_circle_buffer logging");
+                    for(i=0;i<jinghe_count-1;i++){
+                      log_w("jinghe_circle_buffer = [%x]", data_temp[i]);
+                    }
                   //清空缓存数组
+                    
+                  }///就算校验和错误  也需要清空缓存数组
                   memset(data_temp,0x00,jinghe_count);
-                  jinghe_count=0;
-                }  else{
+                    jinghe_count=0;
+                }  
+                else{//不是帧尾  则将数据存起来
                   data_temp[jinghe_count]=cirle_data;
                   jinghe_count++;
                 }           
