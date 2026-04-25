@@ -47,6 +47,12 @@ circle_buffer_t* mid_circle_buffer_create(void){
   tempbuffer->tail = 0;
   return tempbuffer;
 }
+/**
+ * @brief 判断环形buffer是否为空1:空 0:非空
+ * 
+ * @param buffer 环形buffer指针
+ * @return uint8_t 1:空 0:非空
+ */
 uint8_t circle_buf_is_empty(circle_buffer_t* buffer){
   if(buffer == NULL){
     return 0;
@@ -56,6 +62,12 @@ uint8_t circle_buf_is_empty(circle_buffer_t* buffer){
   }
   return 0;
 }
+/**
+ * @brief 判断环形buffer是否已满  1:满员 0:未满员
+ * 
+ * @param buffer 环形buffer指针
+ * @return uint8_t 1:满员 0:未满员
+ */
 uint8_t circle_buf_is_full(circle_buffer_t* buffer){
   if(buffer == NULL){
     return 0;

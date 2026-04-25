@@ -37,7 +37,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "bsp_uart_driver.h"
+#include "uart_task.h"
 
 // #define half_size 2
 // #define full_size 2*half_size
@@ -73,35 +73,107 @@ void uart_rec_A_func(void *arg){
    
   while(1){
     /*1、接收到前端发来的信号*/
-    if(xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY) == pdTRUE){
+      xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY);
       log_w("recv_notify: %x",recv_notify);//打印的 发送来的信号    
-        
-    /**2、判断是否为帧头或帧尾*/
+        /**
+         * app后端接收到前端发来的信号后，
+         * 0、将环形buffer中的数据读取出来，等待解析
+         * 1、寻找帧头-同时打印get的数据---持续输出
+         * 2、寻找帧尾-计算校验和---
+         * 3、判断校验和是否正确--若正确打印后  输出一个换行
+         */
+      
+        /**对数据进行输出 
+         * while1 buffer 读空 输出数据*/
+        if ( NULL == g_cirle_buffer )
+        {
+            log_e("cirle_buffer error pointer");
+            return;
+        }
+        uint16_t frame_state=FRAME_NOT_DETECTED;
+        uint8_t data_temp[CIRCLE_BUFFER_SIZE]={0x00};//缓存循环buffer数据的临时数组
+        uint8_t i=0;
+              uint32_t jinghe_count=0,crc_sum=0;   
+              while(!circle_buf_is_empty(g_cirle_buffer)){
+          circle_buf_get(g_cirle_buffer, &cirle_data);
+          //一次性读空循环缓冲区中的数据
+          log_i("circle_buffer_get success");
+          osDelay(2);
 
-      /*3、对数据进行输出 */
-      /**3.1 while1 buffer 读空 输出数据 */
-    while(circle_buf_get(g_cirle_buffer, &cirle_data)){
-      //一次性读空循环缓冲区中的数据
-      log_w("circle_running_g_cirle_buffer = [%c]", cirle_data);
-      log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);      
-      // HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
-    }
-    /**3.2 if 读取 队列进一次读出一个数据 */
-    // if(circle_buf_get(g_cirle_buffer,&cirle_data)){
-    //   HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
-    //   log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);      
-    //   log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);   
-    // }
+        // log_w("circle_buffer_get = [%x]", cirle_data);
+        // log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);      
+        /**解包 是一个个数据解析circle_buf_get每次get到一个数据，
+         * 下面的根据这一个数据进行动作
+         * ----检测到帧尾之前将数据存起来，同时计算校验和
+         * ----检测到帧尾后，判断校验和（计算的是否等于发送的ccr）
+         * 若正确，打印数据
+         * 若错误，打印错误信息
+         */
+            switch(frame_state){
+            case FRAME_NOT_DETECTED:
+              if(cirle_data==FRAME_HEAD){
+                frame_state=FRAME_HEAD_STATUS;
+                log_i("FRAME_HEAD_STATUS");
+                log_i("cirle_data: %d",cirle_data);//打印的 帧头
+              }//找到帧头  切换到帧头状态
+              break;
+            case FRAME_HEAD_STATUS:
 
+                /**输出净荷数据 */
+                
+                // /**检测到帧尾-计算校验和 */
+                // if(FRAME_TAIL==cirle_data){
+                //   for(i=0;i<jinghe_count-1;i++){
+                //     crc_sum+=cirle_data;
+                //   }
+                // }
+                if(FRAME_TAIL==cirle_data){
 
+                  //打印净荷数据
+                  log_i("jinghe_circle_buffer logging");
+                  for(i=0;i<jinghe_count-1;i++){
+                    log_w("jinghe_circle_buffer = [%x]", data_temp[i]);
+                  }
+                  //清空缓存数组
+                  memset(data_temp,0x00,jinghe_count);
+                  jinghe_count=0;
+                }  else{
+                  data_temp[jinghe_count]=cirle_data;
+                  jinghe_count++;
+                }           
+              
 
-  }
+              break;
+            default:
+              break;      
+            
+            }
+      }
 }
 
     osDelay(1);  
       // HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
       // log_d("i will notify OutputTask& changebuffer");
 }
+/*对数据进行输出 test*/      
+#if 0
+    /*3、对数据进行输出 */
+        /**3.1 while1 buffer 读空 输出数据 */
+    while(!circle_buf_is_empty(g_cirle_buffer)){
+      circle_buf_get(g_cirle_buffer, &cirle_data);
+      //一次性读空循环缓冲区中的数据
+      log_w("circle_running_g_cirle_buffer = [%c]", cirle_data);
+      log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);      
+      // HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
+    }  
+      /**3.2 if 读取 队列进一次读出一个数据 */
+    // if(circle_buf_get(g_cirle_buffer,&cirle_data)){
+    //   HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
+    //   log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);      
+    //   log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);   
+    // }
+#endif
+
 /*circle buffer get测试*/
 #if 0
   if(circle_buf_get(g_cirle_buffer,&cirle_data)){

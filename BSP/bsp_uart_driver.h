@@ -1,7 +1,7 @@
 #ifndef __BSP_UART_DRIVER_H__
 #define __BSP_UART_DRIVER_H__
 
-#define queue_size 10
+#define queue_size 2
 #include "FreeRTOS.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
