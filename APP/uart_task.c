@@ -55,7 +55,7 @@
 // #define full_size 2*half_size
 // #define half_notify (1<<0)
 // #define full_notify (1<<1)
-#define all_size 2
+#define all_size 10
 #define half_notify 0
 #define full_notify 1
 
@@ -86,15 +86,17 @@ void uart_rec_A_func(void *arg){
     // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, p_g_buf, full_size);
 
   while(1){
-	// if(HAL_OK==HAL_UART_Receive_IT(&huart1, g_buf1, 1)){  /////uart 只支持8bit  full_size
-	// 	HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
-	// }
+
+    
   if(circle_buf_get(g_cirle_buffer,&cirle_data)){
     HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
     log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);
   }
     if(xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY) == pdTRUE){
       // printf("%c",recv_notify);
+      // while(circle_buf_get(g_cirle_buffer, &cirle_data)){
+        
+      //   log_w("circle_running_g_cirle_buffer = [%c]", cirle_data);}
       HAL_UART_Transmit_IT(&huart1, g_buf1, 1);
       log_d("i will notify OutputTask& changebuffer");
       log_w("recv_notify: %d",recv_notify);

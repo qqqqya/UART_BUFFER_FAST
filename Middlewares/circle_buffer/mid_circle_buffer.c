@@ -39,12 +39,15 @@
 
 circle_buffer_t* mid_circle_buffer_create(void){
   circle_buffer_t * tempbuffer=NULL;
+  // 1. alloct the memory space
   tempbuffer = (circle_buffer_t *)malloc(sizeof(circle_buffer_t));
   if(tempbuffer == NULL){         //创建一个单位的结构体空间--包含环形buffer数组
     return NULL;
   }
-  tempbuffer->head = 0;
-  tempbuffer->tail = 0;
+  // tempbuffer->head = 0;
+  // tempbuffer->tail = 0;
+  // 2. memory init
+    memset ( tempbuffer, 0, sizeof(circle_buffer_t));
   return tempbuffer;
 }
 uint8_t circle_buf_is_empty(circle_buffer_t* buffer){

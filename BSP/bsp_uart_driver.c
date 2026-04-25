@@ -106,13 +106,37 @@ void uart_driver_func(void){
  * */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
   /**接收完成回调 */
-  log_i("HAL_UART_RxCpltCallback");
-  xQueueSendFromISR(xQueue_A, &send_que_recv_A, NULL);
-  log_d("HAL_UART_Receive_IT send notify: %d",send_que_recv_A);
+  // log_i("HAL_UART_RxCpltCallback");
+  //  xQueueSendFromISR(xQueue_A, &send_que_recv_A, NULL);
+  // log_d("HAL_UART_Receive_IT send notify: %c",send_que_recv_A);
+    
+  // 2. 发送消息队列通知任务（仅通知，不打印）
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xQueueSendFromISR(xQueue_A, &send_que_recv_A, &xHigherPriorityTaskWoken);
+    // 3. 重新开启中断接收
   
 circle_buf_put(g_cirle_buffer,g_recv_data);//将接收到的数据写入循环缓冲区
 HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+  // 4. 如果唤醒了高优先级任务，进行上下文切换
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 
+// circle_buf_put(g_cirle_buffer,g_recv_data);//将接收到的数据写入循环缓冲区
+// uint8_t temp_data = 0;
+// if(circle_buf_get(g_cirle_buffer,     &temp_data)){
+//   log_w("circle_running_g_cirle_buffer = [%c]",temp_data);
+// }
+      
+//     HAL_StatusTypeDef ret_1 = HAL_OK;
+	
+//     ret_1 = HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+//     if(HAL_OK == ret_1)
+//     {
+//         log_i("HAL UART Init Success.");
+//     } 
+//     else
+//     {
+//         log_i("HAL UART Init Failed");
+//     }
   // //持续接收(which_buf2==bufferflag)
   // if(which_buf1==bufferflag) {
   //   log_d("g_data_buffer_1 = [%c]",g_buf1[0]);

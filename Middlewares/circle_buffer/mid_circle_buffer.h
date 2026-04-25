@@ -4,7 +4,7 @@
 #include <stdint.h>//uint8_t uint32_t
 #include <stdio.h>//uint8_t uint32_t
 
-#define CIRCLE_BUFFER_SIZE 8
+#define CIRCLE_BUFFER_SIZE 100
 
 typedef struct{
   uint8_t data[CIRCLE_BUFFER_SIZE];
