@@ -2,9 +2,9 @@
 #define __MID_CIRCLE_BUFFER_H__
 
 #include <stdint.h>//uint8_t uint32_t
-#include <stdio.h>//uint8_t uint32_t
-
-#define CIRCLE_BUFFER_SIZE 8
+#include <stdio.h>//null
+#include "elog.h"
+#define CIRCLE_BUFFER_SIZE 10
 
 typedef struct{
   uint8_t data[CIRCLE_BUFFER_SIZE];

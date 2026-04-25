@@ -36,26 +36,14 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "FreeRTOS.h"
-#include "task.h"
-#include "main.h"
-#include "cmsis_os.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "usart.h"  //UART_HandleTypeDef huart1;
-#include "elog.h"
+#include "bsp_uart_driver.h"
 
-#include <string.h>  // memset
-// #include <stdlib.h>
-#include "task.h"   // 任务通知函数  xTaskNotifyFromISR  MAX_DELAY
-#include "queue.h" 	//队列
-#include "mid_circle_buffer.h"//循环缓冲区
 // #define half_size 2
 // #define full_size 2*half_size
 // #define half_notify (1<<0)
 // #define full_notify (1<<1)
-#define all_size 2
+
 #define half_notify 0
 #define full_notify 1
 extern uint8_t g_buf1[1];
@@ -75,9 +63,9 @@ void uart_rec_A_func(void *arg){
 	HAL_UART_Transmit(&huart1,buff,14,100);//HAL_UART_Transmit_DMA_IT  
 
   //创建消息队列
-  xQueue_A=xQueueCreate(all_size, sizeof(uint32_t));
-  log_i("queue_irq_rec_A Init Success");
-  log_i("queue address: %p",xQueue_A);
+  xQueue_A=xQueueCreate(queue_size, sizeof(uint32_t));
+  log_i("queue_app_rec_A Init Success");
+  log_i("queue_app address: %p",xQueue_A);
 
 /** HAL_UART_Receive_DMA_IT(&huart1, p_g_buf, full_size);//启动dma 接收,100
     重新启动DMA接收  --要在if里面不然任何一个uart触发中断之后都要重新启动 */
@@ -86,14 +74,27 @@ void uart_rec_A_func(void *arg){
   while(1){
     /*1、接收到前端发来的信号*/
     if(xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY) == pdTRUE){
-      log_w("recv_notify: %x",recv_notify);//打印的 发送来的信号
-      
-      /**2、判断是否为帧头或帧尾*/
+      log_w("recv_notify: %x",recv_notify);//打印的 发送来的信号    
+        
+    /**2、判断是否为帧头或帧尾*/
 
       /*3、对数据进行输出 */
-      if(circle_buf_get(g_cirle_buffer,&cirle_data)){
-    HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
-    log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);
+      /**3.1 while1 buffer 读空 输出数据 */
+    while(circle_buf_get(g_cirle_buffer, &cirle_data)){
+      //一次性读空循环缓冲区中的数据
+      log_w("circle_running_g_cirle_buffer = [%c]", cirle_data);
+      log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);      
+      // HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
+    }
+    /**3.2 if 读取 队列进一次读出一个数据 */
+    // if(circle_buf_get(g_cirle_buffer,&cirle_data)){
+    //   HAL_UART_Transmit_IT(&huart1, &cirle_data, 1);
+    //   log_w("circle_running_g_cirle_buffer = [%c]",cirle_data);      
+    //   log_w("head= [%d],tail= [%d]",g_cirle_buffer->head,g_cirle_buffer->tail);   
+    // }
+
+
+
   }
 }
 
@@ -127,7 +128,7 @@ void uart_rec_A_func(void *arg){
 // HAL_UART_Transmit_IT(&huart1, p_g_buf, sizeof(p_g_buf));
       //sizeof(p_g_buf)，这只会返回指针的大小（4字节） */
 #endif
-}
+
 
 
 

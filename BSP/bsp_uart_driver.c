@@ -35,22 +35,8 @@
  *****************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#include "FreeRTOS.h"
-#include "task.h"
-#include "main.h"
-#include "cmsis_os.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "usart.h"  //UART_HandleTypeDef huart1;
-#include "elog.h"
-
-#include <string.h>  // memset
-// #include <stdlib.h>
-#include "task.h"   // 任务通知函数  xTaskNotifyFromISR  MAX_DELAY
-#include "queue.h" 	//队列
-#include "mid_circle_buffer.h"//循环缓冲区
-
+#include "bsp_uart_driver.h"
 /**发送通知-随便给数据就行 */
 #define IRQ_2_FRONT 0xA1A2A3A4
 #define FRONT_2_END  0xB1B2B3B4
@@ -69,7 +55,7 @@ uint8_t bufferflag=which_buf2;
 #endif
 
 
-void uart_driver_func(void){
+void uart_driver_func(void *arg){
 
   g_cirle_buffer = mid_circle_buffer_create();
   if(g_cirle_buffer == NULL){
@@ -77,7 +63,8 @@ void uart_driver_func(void){
     return;
   }
   //刚开始没创建这个前端的队列，卡在调度器了
-  xQueue_Front = xQueueCreate(2, sizeof(uint32_t));//(2,4)就是两个四字节32bit
+  xQueue_Front = xQueueCreate(queue_size, sizeof(uint32_t));//(2,4)就是两个四字节32bit
+  log_i("queue_irq_Front Init Success");
   /*1、启动接收中断 */
   /*1.1 接收一个字节数据*/
  HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);

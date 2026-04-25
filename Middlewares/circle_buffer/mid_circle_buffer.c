@@ -68,6 +68,7 @@ uint8_t circle_buf_is_full(circle_buffer_t* buffer){
 
 uint8_t circle_buf_put(circle_buffer_t* buffer, uint8_t data){
   if(circle_buf_is_full(buffer)){
+    log_e("circle_buf_put: buffer is full");
     return 0;
   }
   // buffer->data[buffer->head++] = data;  但是后面还加了这里去掉
@@ -81,6 +82,7 @@ uint8_t circle_buf_put(circle_buffer_t* buffer, uint8_t data){
 uint8_t circle_buf_get(circle_buffer_t* buffer, uint8_t* data){
 
   if(circle_buf_is_empty(buffer)){
+    log_e("circle_buf_get: buffer is empty");
     return 0;
   }
   // *data =  buffer->data[buffer->tail++];///同样后面还加了这里去掉
