@@ -82,7 +82,7 @@ void uart_rec_A_func(void *arg){
 /** HAL_UART_Receive_DMA_IT(&huart1, p_g_buf, full_size);//启动dma 接收,100
     重新启动DMA接收  --要在if里面不然任何一个uart触发中断之后都要重新启动 */
     // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, p_g_buf, full_size);
-
+   
   while(1){
     /*1、接收到前端发来的信号*/
     if(xQueueReceive(xQueue_A, &recv_notify, portMAX_DELAY) == pdTRUE){
