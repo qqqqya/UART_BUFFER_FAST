@@ -27,4 +27,7 @@ uint8_t circle_buf_is_full(circle_buffer_t* buffer);//判断是否为满
 uint8_t circle_buf_put(circle_buffer_t* buffer, uint8_t data);//入队
 uint8_t circle_buf_get(circle_buffer_t* buffer, uint8_t* data);//出队
 
+void get_circle_buffer_headpos(circle_buffer_t* buffer, uint32_t* pos);//获取当前head 位置
+void inc_circle_buffer_head(circle_buffer_t* buffer, uint32_t incpos);//增加head 位置
+
 #endif // end __MID_CIRCLE_BUFFER_H__

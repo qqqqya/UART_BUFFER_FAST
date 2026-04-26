@@ -70,7 +70,7 @@ void uart_driver_func(void *arg){
 //  HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
  /*1.2 dma多个字节数据*///直接将数据写入循环缓冲区 循环接收
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, g_cirle_buffer->data, CIRCLE_BUFFER_SIZE);//启动dma 接收
-
+    //接收直接将数据写入循环缓冲区 size 为CIRCLE_BUFFER_SIZE--10
  uint32_t recv_notify = 0;
  while(1){
 
@@ -87,14 +87,16 @@ void uart_driver_func(void *arg){
     //       continue;//循环缓冲区已满，等待下一次接收
     //     }
       }
-
-     
+    
       vTaskDelay(1);
  }
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-
+/**单字节接收完成回调，是cpu在搬运完成之后的回调
+ * 如果是dma接收，根本不会进这里
+ * 需要在dma中断中处理数据
+ */
   log_i("HAL_UART_RxCpltCallback");
 
   // /*1、将接收到的数据写入循环缓冲区*/
@@ -109,10 +111,87 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 }
 
 
+/**由于我们需要更改head 只需要用到size
+ * 自写三个dma回调函数--还需要stm32f4xx_hal_uart.c中修改
+ * 1、dma半完成回调
+ * 2、dma完成回调
+ * 3、dma空闲回调
+ */
+void dma_half_callback(uint32_t numofbytes){
+  log_w("dma_half_callback");
+/**1、发送通知给front 传输完成半数据 */
+  uint32_t send_notify = IRQ_2_FRONT;
+  xQueueSendFromISR(xQueue_Front, &send_notify, NULL);
+/**2、修改head 到对应的数量
+ * 定位到当前的缓冲区的一半位置处
+比如,当前缓冲区长度为10(0-9)，head当前位置为32，
+产生半满说明数据已经到达4-index，于是32%5=2,所以将head添加到34即可(因为0~4中，它在2的位置，所以+2就到34)。
+ */
+//1、获取当前head 位置
+  uint32_t cur_head = 0;
+  get_circle_buffer_headpos(g_cirle_buffer,&cur_head);
+//2.获取进入半满中断时，也就是4   数据已经到达的位置：(CIRCULAR_BUFFER_SIZE/2)-1
+  uint32_t mid_pos = (CIRCLE_BUFFER_SIZE/2)-1;///mid_pos=4
+  //3.对head进行取余数  pos_in_circlebuf
+  uint32_t pos_in_circlebuf = cur_head % ( CIRCLE_BUFFER_SIZE/2 );//if 31%5=1   4-1=3
+  inc_circle_buffer_head(g_cirle_buffer, mid_pos - pos_in_circlebuf+1);
+}
+void dma_complete_callback(uint32_t numofbytes){
+  log_w("dma_complete_callback_cpltttttttttt");
+/**1、发送通知给front 传输完成半数据 */
+  uint32_t send_notify = IRQ_2_FRONT;
+  xQueueSendFromISR(xQueue_Front, &send_notify, NULL);
+  /**比如,当前缓冲区长度为10(0-9)，head当前位置为37，产生全满说明数据已经到达9，
+   * 于是37%10=7，将head添加到39即可(因为0-9中，它在7的位置，所以+2就到39) */
+  //1、获取当前head 位置
+  uint32_t cur_head = 0;
+  get_circle_buffer_headpos(g_cirle_buffer,&cur_head);
+
+  //2、获取当前数据位置的物理索引
+   //获取进入全满中断时，也就是9   数据已经到达的位置：(CIRCULAR_BUFFER_SIZE)-1
+  uint32_t physical_data_pos = CIRCLE_BUFFER_SIZE-1;
+  //3.对head进行取余数  pos_in_circlebuf
+  uint32_t pos_in_circlebuf = cur_head % ( CIRCLE_BUFFER_SIZE );
+  inc_circle_buffer_head(g_cirle_buffer, physical_data_pos - pos_in_circlebuf+1);
+ //test；更新head 位置
+  get_circle_buffer_headpos(g_cirle_buffer,&cur_head);
+  log_i("cur_head = %d",(cur_head%CIRCLE_BUFFER_SIZE));
+}
+void uart_irq_idle_callback(uint32_t numofbytes){
+  log_w("uart_irq_idle_callback_idleeeeeeeeee");
+/**1、发送通知给front 传输完成半数据 */
+  uint32_t send_notify = IRQ_2_FRONT;
+  xQueueSendFromISR(xQueue_Front, &send_notify, NULL);
+  /**比如,当前缓冲区长度为10(0-9)，head当前位置为35，产生空闲中断得到的Size数据为9,
+   * 于是需要增加(9-1)-(35%10)=3，将head添加到38即可。 */
+  //1、获取当前head 位置
+  uint32_t cur_head = 0;
+  get_circle_buffer_headpos(g_cirle_buffer,&cur_head);
+
+  //2、获取当前数据位置的物理索引
+   ////numofbytes-1 is current physical index
+  uint32_t physical_data_pos = numofbytes-1;
+  //3.对head进行取余数  pos_in_circlebuf
+  uint32_t pos_in_circlebuf = cur_head % ( CIRCLE_BUFFER_SIZE );
+
+  if(physical_data_pos<pos_in_circlebuf){
+    inc_circle_buffer_head(g_cirle_buffer, (CIRCLE_BUFFER_SIZE + physical_data_pos) - pos_in_circlebuf+1);
+  }
+  else{
+    inc_circle_buffer_head(g_cirle_buffer, physical_data_pos - pos_in_circlebuf+1);
+  }
+
+  //test；更新head 位置
+  get_circle_buffer_headpos(g_cirle_buffer,&cur_head);
+  log_i("cur_head = %d",(cur_head%CIRCLE_BUFFER_SIZE));
+}
+
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
 {
-  log_i("event HAL_UARTEx_RxEventCallback");
+  log_i("event HAL_UARTEx_RxEventCallback: [%d]",Size);
 }
+
+
 /** @brief 单次字节接收完成回调---将数据写入循环缓冲区
  * @param huart 
  * @return 

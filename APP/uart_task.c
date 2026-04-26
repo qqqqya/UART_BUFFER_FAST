@@ -94,8 +94,9 @@ void uart_rec_A_func(void *arg){
         uint8_t data_temp[CIRCLE_BUFFER_SIZE]={0x00};//缓存循环buffer数据的临时数组
         uint8_t i=0;
         uint32_t jinghe_count=0;   
-              while(!circle_buf_is_empty(g_cirle_buffer)){
+        while(!circle_buf_is_empty(g_cirle_buffer)){
           circle_buf_get(g_cirle_buffer, &cirle_data);
+          //从环形buffer中get数据到cirle_data
           //一次性读空循环缓冲区中的数据
           log_i("circle_buffer_get success");
           osDelay(2);
@@ -147,13 +148,16 @@ void uart_rec_A_func(void *arg){
                   }///就算校验和错误  也需要清空缓存数组
                   memset(data_temp,0x00,jinghe_count);
                     jinghe_count=0;
+                    log_w("physical Head_pos= [%d]", g_cirle_buffer->head);//head pos --index 未写入的
                 }  
-                else{//不是帧尾  则将数据存起来
+                else{
+                  // log_w("Head data = [%d]", cirle_data);//接收结束后打印的head
+                  //不是帧尾  则将数据存起来
                   data_temp[jinghe_count]=cirle_data;
                   jinghe_count++;
-                }           
-              
+                  
 
+                }           
               break;
             default:
               break;      

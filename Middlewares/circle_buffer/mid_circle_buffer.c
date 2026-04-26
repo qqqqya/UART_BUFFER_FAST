@@ -102,3 +102,17 @@ uint8_t circle_buf_get(circle_buffer_t* buffer, uint8_t* data){
   buffer->tail = (buffer->tail + 1) % CIRCLE_BUFFER_SIZE;
   return 1;
 }
+
+void get_circle_buffer_headpos(circle_buffer_t* buffer, uint32_t* pos){
+  if(buffer == NULL){
+    return;
+  }
+  *pos = buffer->head;
+}
+void inc_circle_buffer_head(circle_buffer_t* buffer, uint32_t incpos){
+  if(buffer == NULL){
+    return;
+  }
+  buffer->head += incpos;
+}
+
