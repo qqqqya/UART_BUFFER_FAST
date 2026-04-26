@@ -67,29 +67,57 @@ void uart_driver_func(void *arg){
   log_i("queue_irq_Front Init Success");
   /*1、启动接收中断 */
   /*1.1 接收一个字节数据*/
- HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+//  HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+ /*1.2 dma多个字节数据*///直接将数据写入循环缓冲区 循环接收
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, g_cirle_buffer->data, CIRCLE_BUFFER_SIZE);//启动dma 接收
 
  uint32_t recv_notify = 0;
  while(1){
 
-  /*2.中断通知 有数据可读  判断循环缓冲区是否满*/
-  if(pdTRUE==xQueueReceive(xQueue_Front, &recv_notify, portMAX_DELAY)){
-    log_d("xQueueReceive: %x",recv_notify);
-  }
-  if(recv_notify == IRQ_2_FRONT){//中断通知 有数据可读
-    if(circle_buf_is_full(g_cirle_buffer)){//判断循环缓冲区是否满
-      continue;//循环缓冲区已满，等待下一次接收
-    }
-  }
+      /*2.中断通知 有数据可读  判断循环缓冲区是否满*/
+      if(pdTRUE==xQueueReceive(xQueue_Front, &recv_notify, portMAX_DELAY)){
+        log_d("xQueueReceive: %x",recv_notify);
+      }
+      if(recv_notify == IRQ_2_FRONT){//中断通知 有数据可读
+   
+        /*3.通知接收完成事件到xQueue_A end端进行数据解析*/
+        uint32_t send_notify = FRONT_2_END;
+        xQueueSend(xQueue_A, &send_notify, portMAX_DELAY);
+    //  if(circle_buf_is_full(g_cirle_buffer)){//判断循环缓冲区是否满
+    //       continue;//循环缓冲区已满，等待下一次接收
+    //     }
+      }
 
-  /*3.通知接收完成事件到xQueue_A end端进行数据解析*/
-  uint32_t send_notify = FRONT_2_END;
-  xQueueSend(xQueue_A, &send_notify, portMAX_DELAY);
-
-  vTaskDelay(1);
+     
+      vTaskDelay(1);
  }
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+
+  log_i("HAL_UART_RxCpltCallback");
+
+  // /*1、将接收到的数据写入循环缓冲区*/
+  circle_buf_put(g_cirle_buffer,g_recv_data);
+
+  /*2、通知front 数据备好 有数据可读*/
+  uint32_t send_notify = IRQ_2_FRONT;
+  xQueueSendFromISR(xQueue_Front, &send_notify, NULL);
+
+  // /*3、开启下一次接收中断*/
+  HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+}
+
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
+{
+  log_i("event HAL_UARTEx_RxEventCallback");
+}
+/** @brief 单次字节接收完成回调---将数据写入循环缓冲区
+ * @param huart 
+ * @return 
+ * */
+#if 0
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
   log_i("HAL_UART_RxCpltCallback");
@@ -101,10 +129,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
   uint32_t send_notify = IRQ_2_FRONT;
   xQueueSendFromISR(xQueue_Front, &send_notify, NULL);
 
-  /*3、开启下一次接收中断*/
-  HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
+  // /*3、开启下一次接收中断*/
+  // HAL_UART_Receive_IT(&huart1, &g_recv_data, 1);
 }
-
+#endif
 /**各种回调函数 */
 #if 0
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
@@ -116,15 +144,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
 //   // log_i("HAL_UART_RxCpltCallback");
 // }
 
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
-{//这里面只是中断写队列
-//    struct uart_data *Priv_data;
-//    Priv_data=g_cur_uart_dev->priv_data;
-// int len = Size;
-//    if(huart->Instance == USART1){
-//     HAL_UART_Receive_DMA(hhuart, p_g_buf, full_size);//启动dma 接收
-//    }
-}
+
 #endif
 
 

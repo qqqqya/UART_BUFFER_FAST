@@ -23,7 +23,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart_task.h"
@@ -70,7 +69,7 @@
   
   
 #if 0
-// 环形buffer---简易版
+// 环形buffer---�?易版
   uint8_t g_buffer[8]={0};
   uint8_t g_input_buffer[8]={1,2,3,4,5,6,7,8};//输入数据
   uint8_t head=0;
@@ -79,11 +78,11 @@
 
 /**环形buffer 重要三个函数
  * put：将数据写入buffer
- * get：从buffer中读取数�?
+ * get：从buffer中读取数�??
  * isEmpty：判断buffer是否为空
  * 
- * put：将数据写入buffer--从head�?始写�?
- * get：从buffer中读取数�?--从tail�?始读�?
+ * put：将数据写入buffer--从head�??始写�??
+ * get：从buffer中读取数�??--从tail�??始读�??
  */
 void buffer_put(uint8_t val){
   // log_a("val %d,head %d",val,head);
@@ -105,11 +104,11 @@ uint8_t is_empty(void){
 uint8_t buffer_get(uint8_t *val){
   if(!is_empty()){
     // log_a("buffer_get %d",g_buffer[tail]);
-//    *val=g_buffer[tail++];//从tail�?始读取数�?  尾部取出
+//    *val=g_buffer[tail++];//从tail�??始读取数�??  尾部取出
 //    if(tail==buffer_size){
 //      tail=0;
 //    }
-	*val=g_buffer[tail];//从tail�?始读取数�?  尾部取出
+	*val=g_buffer[tail];//从tail�??始读取数�??  尾部取出
     tail=(tail+1)%buffer_size;
 	return 1;
   }
@@ -121,12 +120,12 @@ void my_main(void){
     buffer_put(g_input_buffer[i]);
     log_d("i: %d ;head: %d ;val: %d",i,head,g_input_buffer[i]);//this head has been ++(incremented)
 
-    if(i%2==0 && !is_empty()){  //偶数次读取数�?
+    if(i%2==0 && !is_empty()){  //偶数次读取数�??
       buffer_get(&val);
       log_i("tail: %d val: %d",tail,val);
     }
   }
-  //打印剩余的
+  //打印剩余�?
   while(!is_empty()){
     buffer_get(&val);
     log_i("tail: %d val: %d",tail,val);
@@ -142,7 +141,7 @@ void  my_main(void){
     return;
   }
   for(int i=0;i<CIRCLE_BUFFER_SIZE;i++){
-    circle_buf_put(buffer,g_input_buffer[i]);//这里直接传入结构体就好-内部自动指向arry
+    circle_buf_put(buffer,g_input_buffer[i]);//这里直接传入结构体就�?-内部自动指向arry
     log_d("i: %d ;head: %d ;val: %d",i,buffer->head,buffer->data[i]);
     if(i%2==0 && !circle_buf_is_empty(buffer)){ //偶数次读取数
       circle_buf_get(buffer,&val);
@@ -162,7 +161,7 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
- /**变换buffer+通知另一个线程 */
+ /**变换buffer+通知另一个线�? */
 osThreadId_t rec_A_TaskHandle;
 const osThreadAttr_t rec_A_Task_attributes = {
   .name = "rec_A_Task",
@@ -174,7 +173,7 @@ osThreadId_t uart_driver_TaskHandle;
 const osThreadAttr_t uart_driver_Task_attributes = {
   .name = "uart_driver_Task",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,//靠近内核，优先级高，先执行
+  .priority = (osPriority_t) osPriorityNormal,//靠近内核，优先级高，先执�?
 };
 /* USER CODE END FunctionPrototypes */
 
@@ -211,6 +210,7 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /**应当有三个线程，
    * 
@@ -218,7 +218,7 @@ void MX_FREERTOS_Init(void) {
   ///接收A线程--
   rec_A_TaskHandle = osThreadNew(uart_rec_A_func, NULL, &rec_A_Task_attributes);
 
- ///bsp_uart_driver---开中断-中断回调--切换ab-buffer
+ ///bsp_uart_driver---�?中断-中断回调--切换ab-buffer
   uart_driver_TaskHandle = osThreadNew(uart_driver_func, NULL, &uart_driver_Task_attributes);
   // ConvertVoltageTaskHandle = osThreadNew(ConvertVoltageTask, NULL, &ConvertVoltageTask_attributes);
 
@@ -254,7 +254,7 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 #if 0
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-  /**发送完成回调 */
+  /**发�?�完成回�? */
   log_i("HAL_UART_TxCpltCallback");
 }
 // void HAL_UART_halfCpltCallback(UART_HandleTypeDef *huart){
@@ -294,15 +294,15 @@ void ChangeBufTask(void *arg){
   log_i("queue_irq_rec_A Init Success");
   log_i("queue address: %p",xQueue_A);
   /**创建双ABbuffer */
-  p_g_buf = (uint8_t *)malloc(sizeof(uint8_t)*full_size);//创建双ABbuffer-返回首地址 指针
+  p_g_buf = (uint8_t *)malloc(sizeof(uint8_t)*full_size);//创建双ABbuffer-返回首地�? 指针
 	memset(p_g_buf,0,full_size);
 
 /** HAL_UART_Receive_DMA_IT(&huart1, p_g_buf, full_size);//启动dma 接收
-    重新启动DMA接收  --要在if里面不然任何一个uart触发中断之后都要重新启动 */
+    重新启动DMA接收  --要在if里面不然任何�?个uart触发中断之后都要重新启动 */
     // HAL_UARTEx_ReceiveToIdle_DMA(&huart1, p_g_buf, full_size);
 
 
-	  if(HAL_OK==HAL_UART_Receive_IT(&huart1, p_g_buf, 1)){  /////uart 只支持8bit  full_size
+	  if(HAL_OK==HAL_UART_Receive_IT(&huart1, p_g_buf, 1)){  /////uart 只支�?8bit  full_size
 //    HAL_UART_Transmit_IT(&huart1, p_g_buf, 1);
 		  memset(p_g_buf,0,full_size);
 		}
@@ -315,12 +315,12 @@ void ChangeBufTask(void *arg){
       log_w("recv_notify: %d",recv_notify);
     }
   }
-    /***uint8_t i=sizeof(p_g_buf);HAL_UART_Transmit_IT(&huart1, &i, 1);//这个地方只会是0x04---发的是ascii码
+    /***uint8_t i=sizeof(p_g_buf);HAL_UART_Transmit_IT(&huart1, &i, 1);//这个地方只会�?0x04---发的是ascii�?
 	  printf("heeeeeello\r\n");
-//	HAL_UART_Transmit(&huart1, &i, 1, 100); // 先用阻塞发送测试
+//	HAL_UART_Transmit(&huart1, &i, 1, 100); // 先用阻塞发�?�测�?
 
 // HAL_UART_Transmit_IT(&huart1, p_g_buf, sizeof(p_g_buf));
-      //sizeof(p_g_buf)，这只会返回指针的大小（4字节） */
+      //sizeof(p_g_buf)，这只会返回指针的大小（4字节�? */
   /* USER CODE END StartDefaultTask */
 }
 void OutputTask(void *arg){
